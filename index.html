@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankFlow - Mobile Banking Demo</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary-blue: #0066cc;
+            --secondary-blue: #0056b3;
+            --light-blue: #e3f2fd;
+            --success-green: #28a745;
+            --warning-orange: #ffc107;
+            --danger-red: #dc3545;
+            --text-dark: #333;
+            --text-light: #666;
+            --border-light: #e9ecef;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: var(--text-dark);
+        }
+
+        .container-fluid {
+            max-width: 414px;
+            margin: 0 auto;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .app-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .app-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: var(--light-blue);
+            border-bottom: 1px solid var(--border-light);
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-blue);
+            border-color: var(--secondary-blue);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline-primary {
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+
+        .segment-card {
+            border: 2px solid var(--border-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .segment-card:hover {
+            border-color: var(--primary-blue);
+            background-color: var(--light-blue);
+        }
+
+        .segment-card.selected {
+            border-color: var(--primary-blue);
+            background-color: var(--light-blue);
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-light);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+        }
+
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-blue), var(--secondary-blue));
+            border-radius: 4px;
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 414px;
+            background: white;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-light);
+            font-size: 0.75rem;
+            padding: 0.5rem;
+            transition: color 0.2s ease;
+        }
+
+        .nav-item.active {
+            color: var(--primary-blue);
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .main-content {
+            padding: 1rem;
+            padding-bottom: 80px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin: 1rem 0;
+        }
+
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        .transaction-icon.income {
+            background: var(--success-green);
+        }
+
+        .transaction-icon.expense {
+            background: var(--danger-red);
+        }
+
+        .transaction-details {
+            flex: 1;
+        }
+
+        .transaction-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .transaction-date {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .transaction-amount {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .file-upload {
+            border: 2px dashed var(--border-light);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary-blue);
+            background-color: var(--light-blue);
+        }
+
+        .file-upload.uploaded {
+            border-color: var(--success-green);
+            background-color: #d4edda;
+        }
+
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+
+        .funding-option {
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .funding-option:hover {
+            border-color: var(--primary-blue);
+            background-color: var(--light-blue);
+        }
+
+        .funding-option.selected {
+            border-color: var(--primary-blue);
+            background-color: var(--light-blue);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner-border {
+            color: var(--primary-blue);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- App Header -->
+        <div class="app-header">
+            <h1><i class="fas fa-university"></i> BankFlow</h1>
+            <p>Your Complete Banking Solution</p>
+        </div>
+
+        <!-- Onboarding Section -->
+        <div id="onboarding" class="section active">
+            <div class="main-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-user-plus"></i> Get Started</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Welcome to BankFlow! Let's set up your profile to provide you with the best banking experience.</p>
+                        <div class="progress mb-3">
+                            <div class="progress-bar" role="progressbar" style="width: 0%" id="onboardingProgress"></div>
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="startOnboarding()">
+                            <i class="fas fa-arrow-right"></i> Start Onboarding
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Segment Selection Section -->
+        <div id="segmentSelection" class="section">
+            <div class="main-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-users"></i> Select Your Segment</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Choose the category that best describes your business or profile:</p>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="segment-card card" onclick="selectSegment('women-led')">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-female"></i> Women-led Enterprise</h6>
+                                        <p class="text-muted small">Women-owned businesses and startups</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="segment-card card" onclick="selectSegment('legal')">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-balance-scale"></i> Legal Services</h6>
+                                        <p class="text-muted small">Law firms and legal professionals</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="segment-card card" onclick="selectSegment('startup')">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-rocket"></i> Startup</h6>
+                                        <p class="text-muted small">Early-stage technology companies</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="segment-card card" onclick="selectSegment('micro-enterprise')">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-store"></i> Micro Enterprise</h6>
+                                        <p class="text-muted small">Small businesses and sole proprietors</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary w-100 mt-3" onclick="proceedToKYC()" disabled id="segmentNextBtn">
+                            <i class="fas fa-arrow-right"></i> Continue
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KYC Section -->
+        <div id="kyc" class="section">
+            <div class="main-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-id-card"></i> Know Your Customer (KYC)</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="kycForm">
+                            <div class="mb-3">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="fullName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="dob" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Address</label>
+                                <textarea class="form-control" id="address" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Identity Document</label>
+                                <div class="file-upload" onclick="uploadDocument('identity')">
+                                    <i class="fas fa-upload"></i>
+                                    <p>Click to upload ID document</p>
+                                    <small class="text-muted">PDF, JPG, PNG (Max 5MB)</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Proof of Address</label>
+                                <div class="file-upload" onclick="uploadDocument('address')">
+                                    <i class="fas fa-upload"></i>
+                                    <p>Click to upload address proof</p>
+                                    <small class="text-muted">PDF, JPG, PNG (Max 5MB)</small>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-check"></i> Submit KYC
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Eligibility Check Section -->
+        <div id="eligibilityCheck" class="section">
+            <div class="main-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-clipboard-check"></i> Eligibility Check</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="loading" id="eligibilityLoading">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Checking your eligibility...</p>
+                        </div>
+                        <div id="eligibilityResults" style="display: none;">
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <strong>Congratulations!</strong> You are eligible for our banking services.
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="metric-card">
+                                        <div class="metric-value">85%</div>
+                                        <div class="metric-label">Approval Rate</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="metric-card">
+                                        <div class="metric-value">$50K</div>
+                                        <div class="metric-label">Credit Limit</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary w-100 mt-3" onclick="showSection('creditScoring')">
+                                <i class="fas fa-arrow-right"></i> Continue to Credit Scoring
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Credit Scoring Section -->
+        <div id="creditScoring" class="section">
+            <div class="main-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Credit Scoring</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-4">
+                            <div class="col-4">
+                                <div class="metric-card">
+                                    <div class="metric-value">750</div>
+                                    <div class="metric-label">Credit Score</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="metric-card">
+                                    <div class="metric-value">A+</div>
+                                    <div class="metric-label">Grade</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="metric-card">
+                                    <div class="metric-value">92%</div>
+                                    <div class="metric-label">Reliability</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="creditChart"></canvas>
+                        </div>
+                        <h6>Credit Factors</h6>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Payment History</span>
+                                <span>Excellent</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" style="width: 95%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Credit Utilization</span>
+                                <span>Good</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" style="width: 80%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>Length of Credit History</span>
+                                <span>Fair</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: 60%"></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary w-100 mt-3" onclick="showSection('fundingPlatform')">
+                            <i class="fas fa-arrow-right"></i> Explore Funding Options
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Funding Platform Section -->
+        <div id="fundingPlatform" class="section">
+            <div class="main-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-hand-holding-usd"></i> Funding Platform</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Based on your profile, here are the funding options available to you:</p>
+                        <div class="funding-option" onclick="selectFundingOption('loan')">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-money-check-alt fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6>Business Loan</h6>
+                                    <p class="text-muted mb-1">Up to $100,000 • 5.5% APR</p>
+                                    <small class="text-success">Pre-approved</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="funding-option" onclick="selectFundingOption('equity')">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-chart-pie fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6>Equity Funding</h6>
+                                    <p class="text-muted mb-1">Connect with investors</p>
+                                    <small class="text-info">Available</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="funding-option" onclick="selectFundingOption('line-of-credit')">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-credit-card fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6>Line of Credit</h6>
+                                    <p class="text-muted mb-1">Up to $50,000 • 6.2% APR</p>
+                                    <small class="text-success">Pre-approved</small>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary w-100 mt-3" onclick="applyFunding()">
+                            <i class="fas fa-paper-plane"></i> Apply for Funding
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section">
+            <div class="main-content">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6>Account Balance</h6>
+                        <h3 class="text-primary">$25,847.50</h3>
+                        <small class="text-success">
+                            <i class="fas fa-arrow-up"></i> +2.3% from last month
+                        </small>
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <div class="metric-card">
+                            <div class="metric-value">$12,500</div>
+                            <div class="metric-label">Available Credit</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-card">
+                            <div class="metric-value">3</div>
+                            <div class="metric-label">Active Loans</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Recent Transactions</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="transactionList">
+                            <!-- Transactions will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div id="profile" class="section">
+            <div class="main-content">
+                <div class="card mb-3">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-user-circle fa-5x text-primary"></i>
+                        </div>
+                        <h5 id="profileName">John Doe</h5>
+                        <p class="text-muted" id="profileEmail">john.doe@example.com</p>
+                        <span class="status-badge status-approved">Verified</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Account Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <span>KYC Status</span>
+                                    <span class="status-badge status-approved">Approved</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <span>Credit Score</span>
+                                    <span class="text-primary font-weight-bold">750</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <span>Account Type</span>
+                                    <span>Premium Business</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <span>Member Since</span>
+                                    <span>Jan 2024</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Education Section -->
+        <div id="education" class="section">
+            <div class="main-content">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-graduation-cap"></i> Financial Education</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Complete modules to improve your financial knowledge and credit score.</p>
+                        <div class="row g-3 mb-3">
+                            <div class="col-4">
+                                <div class="metric-card">
+                                    <div class="metric-value">3/7</div>
+                                    <div class="metric-label">Completed</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="metric-card">
+                                    <div class="metric-value">+25</div>
+                                    <div class="metric-label">Score Boost</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="metric-card">
+                                    <div class="metric-value">2</div>
+                                    <div class="metric-label">Certificates</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress mb-3">
+                            <div class="progress-bar" style="width: 43%"></div>
+                        </div>
+                        <div id="educationModules">
+                            <!-- Education modules will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Services Section -->
+        <div id="accountServices" class="section">
+            <div class="main-content">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-university"></i> Account Services</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Open new accounts and manage your banking services.</p>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="funding-option" onclick="openAccount('savings')">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="fas fa-piggy-bank fa-2x text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h6>Savings Account</h6>
+                                            <p class="text-muted mb-1">2.5% APY • No minimum balance</p>
+                                            <small class="text-success">Available</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="funding-option" onclick="openAccount('remittance')">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="fas fa-paper-plane fa-2x text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h6>Remittance Account</h6>
+                                            <p class="text-muted mb-1">Send money internationally</p>
+                                            <small class="text-info">Available</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="funding-option" onclick="openAccount('business')">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="fas fa-briefcase fa-2x text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h6>Business Account</h6>
+                                            <p class="text-muted mb-1">Multi-currency support</p>
+                                            <small class="text-success">Available</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings" class="section">
+            <div class="main-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Settings</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-bell me-2"></i> Notifications</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="notifications" checked>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-shield-alt me-2"></i> Two-Factor Auth</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="twoFactor" checked>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-moon me-2"></i> Dark Mode</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="darkMode">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6>Support</h6>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-question-circle me-2"></i> Help Center
+                        </button>
+                        <button class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-comments me-2"></i> Contact Support
+                        </button>
+                        <button class="btn btn-outline-danger w-100">
+                            <i class="fas fa-sign-out-alt me-2"></i> Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <a href="#" class="nav-item active" onclick="showSection('dashboard')">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('creditScoring')">
+                <i class="fas fa-chart-line"></i>
+                <span>Credit</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('fundingPlatform')">
+                <i class="fas fa-hand-holding-usd"></i>
+                <span>Funding</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('education')">
+                <i class="fas fa-graduation-cap"></i>
+                <span>Learn</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('profile')">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Application state
+        let appState = {
+            currentSection: 'onboarding',
+            onboardingStep: 0,
+            selectedSegment: '',
+            selectedFundingOption: '',
+            kycStatus: 'pending',
+            creditScore: 750,
+            userProfile: {
+                name: '',
+                email: '',
+                phone: '',
+                address: ''
+            },
+            transactions: [
+                {
+                    id: 1,
+                    type: 'income',
+                    title: 'Salary Deposit',
+                    amount: 5000,
+                    date: '2024-01-15',
+                    icon: 'fas fa-arrow-down'
+                },
+                {
+                    id: 2,
+                    type: 'expense',
+                    title: 'Office Rent',
+                    amount: -2500,
+                    date: '2024-01-14',
+                    icon: 'fas fa-home'
+                },
+                {
+                    id: 3,
+                    type: 'income',
+                    title: 'Client Payment',
+                    amount: 3200,
+                    date: '2024-01-13',
+                    icon: 'fas fa-handshake'
+                },
+                {
+                    id: 4,
+                    type: 'expense',
+                    title: 'Marketing Spend',
+                    amount: -800,
+                    date: '2024-01-12',
+                    icon: 'fas fa-bullhorn'
+                },
+                {
+                    id: 5,
+                    type: 'income',
+                    title: 'Investment Return',
+                    amount: 1200,
+                    date: '2024-01-11',
+                    icon: 'fas fa-chart-line'
+                }
+            ]
+        };
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAppState();
+            renderTransactions();
+            
+            // Check if user has completed onboarding
+            if (appState.onboardingStep >= 5) {
+                showSection('dashboard');
+            }
+        });
+
+        // Section management
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Show selected section
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                appState.currentSection = sectionId;
+            }
+
+            // Update navigation
+            updateNavigation(sectionId);
+            
+            // Initialize section-specific functionality
+            initializeSectionFeatures(sectionId);
+
+            // Save state
+            saveAppState();
+        }
+
+        function updateNavigation(activeSection) {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Find and activate the corresponding nav item
+            const sectionNavMap = {
+                'dashboard': 0,
+                'creditScoring': 1,
+                'fundingPlatform': 2,
+                'profile': 3,
+                'settings': 4
+            };
+
+            const activeIndex = sectionNavMap[activeSection];
+            if (activeIndex !== undefined && navItems[activeIndex]) {
+                navItems[activeIndex].classList.add('active');
+            }
+        }
+
+        function initializeSectionFeatures(sectionId) {
+            switch(sectionId) {
+                case 'creditScoring':
+                    initializeCreditChart();
+                    break;
+                case 'dashboard':
+                    renderTransactions();
+                    break;
+                case 'profile':
+                    updateProfileDisplay();
+                    break;
+                case 'kyc':
+                    initializeKYCForm();
+                    break;
+                case 'education':
+                    initializeEducationModules();
+                    break;
+            }
+        }
+
+        // Onboarding flow
+        function startOnboarding() {
+            appState.onboardingStep = 1;
+            updateOnboardingProgress();
+            showSection('segmentSelection');
+        }
+
+        function updateOnboardingProgress() {
+            const progress = (appState.onboardingStep / 5) * 100;
+            const progressBar = document.getElementById('onboardingProgress');
+            if (progressBar) {
+                progressBar.style.width = progress + '%';
+            }
+        }
+
+        function selectSegment(segment) {
+            appState.selectedSegment = segment;
+            
+            // Update UI
+            const segmentCards = document.querySelectorAll('.segment-card');
+            segmentCards.forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            event.target.closest('.segment-card').classList.add('selected');
+            
+            // Enable next button
+            document.getElementById('segmentNextBtn').disabled = false;
+            
+            saveAppState();
+        }
+
+        function proceedToKYC() {
+            appState.onboardingStep = 2;
+            updateOnboardingProgress();
+            showSection('kyc');
+        }
+
+        // KYC functionality
+        function initializeKYCForm() {
+            const kycForm = document.getElementById('kycForm');
+            if (kycForm) {
+                kycForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Collect form data
+                    appState.userProfile.name = document.getElementById('fullName').value;
+                    appState.userProfile.email = document.getElementById('email').value;
+                    appState.userProfile.phone = document.getElementById('phone').value;
+                    appState.userProfile.address = document.getElementById('address').value;
+                    
+                    // Simulate KYC processing
+                    appState.onboardingStep = 3;
+                    appState.kycStatus = 'processing';
+                    updateOnboardingProgress();
+                    
+                    // Show eligibility check
+                    showSection('eligibilityCheck');
+                    
+                    // Simulate eligibility check
+                    setTimeout(function() {
+                        const loading = document.getElementById('eligibilityLoading');
+                        const results = document.getElementById('eligibilityResults');
+                        if (loading) loading.style.display = 'none';
+                        if (results) results.style.display = 'block';
+                        appState.kycStatus = 'approved';
+                        appState.onboardingStep = 4;
+                        updateOnboardingProgress();
+                    }, 3000);
+                    
+                    saveAppState();
+                });
+            }
+        }
+
+        function uploadDocument(type) {
+            const fileUpload = event.target.closest('.file-upload');
+            
+            // Simulate file upload
+            fileUpload.innerHTML = `
+                <i class="fas fa-check-circle text-success"></i>
+                <p class="text-success">Document uploaded successfully</p>
+                <small class="text-muted">${type === 'identity' ? 'ID_Document.pdf' : 'Address_Proof.pdf'}</small>
+            `;
+            fileUpload.classList.add('uploaded');
+        }
+
+        // Credit scoring
+        function initializeCreditChart() {
+            const ctx = document.getElementById('creditChart');
+            if (!ctx) return;
+
+            const chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Excellent', 'Good', 'Fair', 'Poor'],
+                    datasets: [{
+                        data: [750, 150, 50, 50],
+                        backgroundColor: [
+                            '#28a745',
+                            '#0066cc',
+                            '#ffc107',
+                            '#dc3545'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Funding platform
+        function selectFundingOption(option) {
+            appState.selectedFundingOption = option;
+            
+            // Update UI
+            const fundingOptions = document.querySelectorAll('.funding-option');
+            fundingOptions.forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            event.target.closest('.funding-option').classList.add('selected');
+            
+            saveAppState();
+        }
+
+        function applyFunding() {
+            if (!appState.selectedFundingOption) {
+                alert('Please select a funding option first');
+                return;
+            }
+            
+            // Simulate funding application
+            const fundingType = appState.selectedFundingOption.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            
+            if (confirm(`Apply for ${fundingType}? This will start the application process.`)) {
+                alert('Application submitted successfully! You will receive an update within 24 hours.');
+                appState.onboardingStep = 5;
+                updateOnboardingProgress();
+                showSection('dashboard');
+            }
+        }
+
+        // Transaction management
+        function renderTransactions() {
+            const transactionList = document.getElementById('transactionList');
+            if (!transactionList) return;
+
+            const transactionsHTML = appState.transactions.map(transaction => {
+                const amountClass = transaction.type === 'income' ? 'text-success' : 'text-danger';
+                const amountSymbol = transaction.type === 'income' ? '+' : '';
+                
+                return `
+                    <div class="transaction-item">
+                        <div class="transaction-icon ${transaction.type}">
+                            <i class="${transaction.icon}"></i>
+                        </div>
+                        <div class="transaction-details">
+                            <div class="transaction-title">${transaction.title}</div>
+                            <div class="transaction-date">${formatDate(transaction.date)}</div>
+                        </div>
+                        <div class="transaction-amount ${amountClass}">
+                            ${amountSymbol}$${Math.abs(transaction.amount).toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            transactionList.innerHTML = transactionsHTML;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        // Profile management
+        function updateProfileDisplay() {
+            const profileName = document.getElementById('profileName');
+            const profileEmail = document.getElementById('profileEmail');
+            
+            if (profileName && appState.userProfile.name) {
+                profileName.textContent = appState.userProfile.name;
+            }
+            
+            if (profileEmail && appState.userProfile.email) {
+                profileEmail.textContent = appState.userProfile.email;
+            }
+        }
+
+        // Local storage management
+        function saveAppState() {
+            localStorage.setItem('bankFlowAppState', JSON.stringify(appState));
+        }
+
+        function loadAppState() {
+            const savedState = localStorage.getItem('bankFlowAppState');
+            if (savedState) {
+                try {
+                    const parsedState = JSON.parse(savedState);
+                    appState = { ...appState, ...parsedState };
+                } catch (error) {
+                    console.error('Error loading app state:', error);
+                }
+            }
+        }
+
+        // Settings management
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox') {
+                const settingName = e.target.id;
+                const isEnabled = e.target.checked;
+                
+                // Handle specific settings
+                switch(settingName) {
+                    case 'darkMode':
+                        toggleDarkMode(isEnabled);
+                        break;
+                    case 'notifications':
+                        toggleNotifications(isEnabled);
+                        break;
+                    case 'twoFactor':
+                        toggleTwoFactor(isEnabled);
+                        break;
+                }
+                
+                // Save setting
+                if (!appState.settings) appState.settings = {};
+                appState.settings[settingName] = isEnabled;
+                saveAppState();
+            }
+        });
+
+        function toggleDarkMode(enabled) {
+            if (enabled) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        }
+
+        function toggleNotifications(enabled) {
+            if (enabled) {
+                // Request notification permission
+                if ('Notification' in window) {
+                    Notification.requestPermission();
+                }
+            }
+        }
+
+        function toggleTwoFactor(enabled) {
+            if (enabled) {
+                alert('Two-factor authentication has been enabled for enhanced security.');
+            } else {
+                alert('Two-factor authentication has been disabled.');
+            }
+        }
+
+        // Education modules
+        function initializeEducationModules() {
+            const modules = [
+                {
+                    id: 1,
+                    title: 'Financial Basics',
+                    description: 'Learn budgeting and financial planning fundamentals',
+                    completed: true,
+                    progress: 100,
+                    points: 10
+                },
+                {
+                    id: 2,
+                    title: 'Credit Building',
+                    description: 'Understanding credit scores and how to improve them',
+                    completed: true,
+                    progress: 100,
+                    points: 15
+                },
+                {
+                    id: 3,
+                    title: 'Business Finance',
+                    description: 'Managing business cash flow and expenses',
+                    completed: true,
+                    progress: 100,
+                    points: 20
+                },
+                {
+                    id: 4,
+                    title: 'Investment Basics',
+                    description: 'Introduction to investing and risk management',
+                    completed: false,
+                    progress: 60,
+                    points: 25
+                },
+                {
+                    id: 5,
+                    title: 'Loan Management',
+                    description: 'Understanding different types of loans and terms',
+                    completed: false,
+                    progress: 30,
+                    points: 20
+                },
+                {
+                    id: 6,
+                    title: 'Tax Planning',
+                    description: 'Business tax strategies and compliance',
+                    completed: false,
+                    progress: 0,
+                    points: 30
+                },
+                {
+                    id: 7,
+                    title: 'Insurance & Risk',
+                    description: 'Protecting your business and personal assets',
+                    completed: false,
+                    progress: 0,
+                    points: 25
+                }
+            ];
+
+            const modulesContainer = document.getElementById('educationModules');
+            if (!modulesContainer) return;
+
+            const modulesHTML = modules.map(module => {
+                const statusClass = module.completed ? 'status-approved' : (module.progress > 0 ? 'status-pending' : 'status-rejected');
+                const statusText = module.completed ? 'Completed' : (module.progress > 0 ? 'In Progress' : 'Not Started');
+                const progressWidth = module.progress + '%';
+
+                return `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">${module.title}</h6>
+                                    <p class="text-muted small mb-2">${module.description}</p>
+                                    <div class="progress mb-2" style="height: 6px;">
+                                        <div class="progress-bar" style="width: ${progressWidth}"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="status-badge ${statusClass}">${statusText}</span>
+                                        <small class="text-muted">${module.points} points</small>
+                                    </div>
+                                </div>
+                                <div class="ms-3">
+                                    <button class="btn btn-sm ${module.completed ? 'btn-success' : 'btn-primary'}" 
+                                            onclick="accessModule(${module.id})"
+                                            ${module.completed ? 'disabled' : ''}>
+                                        <i class="fas ${module.completed ? 'fa-check' : 'fa-play'}"></i>
+                                        ${module.completed ? 'Done' : 'Start'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            modulesContainer.innerHTML = modulesHTML;
+        }
+
+        function accessModule(moduleId) {
+            alert(`Starting module ${moduleId}. This would open the learning content in a real app.`);
+        }
+
+        // Account services
+        function openAccount(accountType) {
+            const accountTypes = {
+                'savings': 'Savings Account',
+                'remittance': 'Remittance Account',
+                'business': 'Business Account'
+            };
+
+            const accountName = accountTypes[accountType] || 'Account';
+            
+            if (confirm(`Open a ${accountName}? This will start the account opening process.`)) {
+                alert(`${accountName} application submitted! You'll receive approval within 24 hours.`);
+            }
+        }
+
+        // Update navigation mapping
+        function updateNavigation(activeSection) {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Find and activate the corresponding nav item
+            const sectionNavMap = {
+                'dashboard': 0,
+                'creditScoring': 1,
+                'fundingPlatform': 2,
+                'education': 3,
+                'profile': 4
+            };
+
+            const activeIndex = sectionNavMap[activeSection];
+            if (activeIndex !== undefined && navItems[activeIndex]) {
+                navItems[activeIndex].classList.add('active');
+            }
+        }
+
+        // Initialize app with performance logging
+        document.addEventListener('DOMContentLoaded', function() {
+            const startTime = performance.now();
+            
+            try {
+                loadAppState();
+                renderTransactions();
+                
+                // Check if user has completed onboarding
+                if (appState.onboardingStep >= 5) {
+                    showSection('dashboard');
+                } else {
+                    showSection('onboarding');
+                }
+                
+                const endTime = performance.now();
+                console.log(`App loaded in ${(endTime - startTime).toFixed(2)}ms`);
+            } catch (error) {
+                console.error('Application error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
